@@ -200,7 +200,7 @@ def projection(vector_a, vector_b):
     else:
         dot_prod = np.dot(vector_a, vector_b)
         mag = np.linalg.norm(vector_b)
-        proj = dot_prod / mag**2) * vector_b
+        proj = dot_prod / mag**2 * vector_b
         
     return proj
 
