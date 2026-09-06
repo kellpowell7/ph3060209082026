@@ -175,39 +175,33 @@ def is_linear_operator(matrix, tolerance=1e-10):
         rows, cols = matrix.shape
         if rows == cols: return True
         else: return False
-    else raise ValueError = ('Matrix is the incorrect size. ')
+    else: raise ValueError = ('Matrix is the incorrect size. ')
 
 
 def projection(vector_a, vector_b):
     """Project vector $\\vec{A}$ onto vector $\\vec{B}$."""
-    raise NotImplementedError("Implement projection")
-
+    
 
 def rotate_vector(vector, axis, theta):
     """Rotate a vector through angle theta about an axis in $\\mathbb{R}^3$."""
-    raise NotImplementedError("Implement rotate_vector")
-
+    
 
 def plane_from_points(first, second, third):
     """Find the plane through three noncollinear points."""
-    raise NotImplementedError("Implement plane_from_points")
-
+    
 
 def distance_point_to_plane(point, normal, offset):
     """Find the minimum distance from a point to a plane."""
-    raise NotImplementedError("Implement distance_point_to_plane")
-
+    
 
 def distance_between_lines(first_point, first_direction, second_point, second_direction):
     """Find the minimum distance between two lines in $\\mathbb{R}^3$."""
-    raise NotImplementedError("Implement distance_between_lines")
-
+    
 
 def solve_cable_tension(N, L, rho, g=EARTH_GRAVITY):
     """Solve for the tension in a hanging cable discretized into N segments."""
-    raise NotImplementedError("Implement solve_cable_tension")
-
+    
 
 def plot_cable_tension(z, T, L):
     """Plot the tension along a hanging cable, colored by tension magnitude."""
-    raise NotImplementedError("Implement plot_cable_tension")
+    
