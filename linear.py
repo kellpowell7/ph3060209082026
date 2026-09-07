@@ -344,9 +344,133 @@ def distance_between_lines(first_point, first_direction, second_point, second_di
     
 
 def solve_cable_tension(N, L, rho, g=EARTH_GRAVITY):
-    """Solve for the tension in a hanging cable discretized into N segments."""
+    """Solves for the static tension distribution in a hanging vertical cable.
+    
+    Parameters:
+    -----------
+    N : int
+        Number of discrete segments.
+    L : float or astropy.units.Quantity
+        Total length of the cable.
+    rho : callable
+        Function accepting height z and returning mass density.
+    g : float or astropy.units.Quantity, optional
+        Gravitational acceleration (default: Earth's gravity).
+        
+    Returns:
+    --------
+    T : numpy.ndarray or astropy.units.Quantity
+        Tension values at each of the N segments.
+    z_boundaries : numpy.ndarray or astropy.units.Quantity
+        Height positions of the N+1 segment boundaries from 0 to L.
+    """
+    
+    rho_0 = 0.5 * (1.0 + z / L)
+    def rho(z):
+        return rho_0 * (1.0 + z / L)
+    
+    
+    # Determines whether the inputs have astropy units
+    has_units = isinstance(L, u.Quantity) or isinstance(g, u.Quantity)
+
+    # Strip units for internal calculations
+    if has_units:
+        L_val = L.to(u.m).value
+        g_val = g.to(u.m / u.s**2).value
+    else:
+        L_val = L
+        g_val = g
+
+    delta_z = L_val / N
+    z_bound = np.linspace(0.0, L_val, N + 1)
+    z_mid = delta_z * (np.arange(N) + 0.5)
+
+    # Evaluate density function at midpoints
+    if has_units:
+        z_mid_input = z_mid * u.m
+        rho_eval = rho(z_mid_input)
+        rho_val = (
+            rho_eval.to(u.kg / u.m).value
+            if hasattr(rho_eval, "to")
+            else rho_eval
+        )
+    else:
+        rho_val = rho(z_mid)
+
+    # Downward gravitational weight of each segment
+    b_val = rho_val * g_val * delta_z
+
+    # Matrix for T_i - T_{i+1} = weight_i (Upper triangular matrix)
+    A = np.eye(N) + np.diag(-np.ones(N - 1), k=1)
+    T_val = np.linalg.solve(A, b_val)
+
+    # Reattach units
+    if has_units:
+        z_bound = z_bound * u.m
+        T = T_val * u.N
+    else:
+        T = T_val
+
+    return T, z_bound
     
 
 def plot_cable_tension(z, T, L):
-    """Plot the tension along a hanging cable, colored by tension magnitude."""
+    """Plot the tension along a hanging cable, colored by tension magnitude.
+    Parameters
+    ----------
+    N : int
+        Number of discrete segments along the cable.
+    L : float or astropy.units.Quantity
+        Total length of the cable.
+    rho : callable
+        Function accepting height position `z` and returning line mass density.
+        Must accept array inputs or `astropy.units.Quantity` if `L` has units.
+    g : float or astropy.units.Quantity, optional
+        Gravitational acceleration (default is `EARTH_GRAVITY`).
+
+    Returns
+    -------
+    T : numpy.ndarray or astropy.units.Quantity
+        Array of size (N,) containing tension values for each segment from bottom to top.
+    z_boundaries : numpy.ndarray or astropy.units.Quantity
+        Array of size (N+1,) containing height positions of segment boundaries from 0 to L.
+    """
+    has_units = hasattr(z_bound, "unit")
+
+    if has_units:
+        z_val = z_bound.to(u.m).value
+        T_val = T.to(u.N).value
+        L_val = L.to(u.m).value
+    else:
+        z_val = np.asarray(z_bound)
+        T_val = np.asarray(T)
+        L_val = L
+
+    N = len(T_val)
+
+    fig, ax = plt.subplots(figsize=(4, 7))
+
+    segments = []
+    for i in range(N):
+        point_start = (0, z_val[i])
+        point_end = (0, z_val[i + 1])
+        segments.append([point_start, point_end])
+
+    lc = LineCollection(segments, cmap="inferno")
+    lc.set_array(T_val)
+    lc.set_linewidth(5)
+
+    ax.add_collection(lc)
+
+    ax.set_xlim(-0.5, 0.5)
+    ax.set_ylim(0, L_val)
+    ax.set_xticks([0])
+    ax.set_xticklabels(["Cable Column"])
+    ax.set_ylabel("Z Position (m)")
+    ax.set_title(f"Cable Tension Profile (N = {N} segments)")
+
+    cbar = fig.colorbar(lc, ax=ax)
+    cbar.set_label("Tension (N)")
+
+    return fig, ax
     
