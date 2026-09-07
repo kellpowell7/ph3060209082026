@@ -110,8 +110,9 @@ def are_commutative(first, second, tolerance=1e-10):
     True | False: boolean
         Returns whether or not the matrices commute.
     """
-    if first @ second == second @ first: return True
-    else: return False
+    ab = first @ second
+    ba = second @ first
+    return np.allclose(ab, ba, atol=tolerance)
 
 
 def is_hermitian(matrix, tolerance=1e-10):
@@ -243,11 +244,11 @@ def rotate_vector(vector, axis, theta):
         return rot_mat @ vector
 
     
-    if axis == '1':
+    if axis == 1:
         return x_rot(vector, theta)
-    elif axis == '2':
+    elif axis == 2:
         return y_rot(vector, theta)
-    elif axis == '3':
+    elif axis == 3:
         return z_rot(vector, theta)
     else:
         raise ValueError('Invalid axis entered. ')
