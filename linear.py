@@ -12,6 +12,8 @@ from numpy.typing import NDArray
 import numpy as np
 from astropy import units as u
 import math
+import matplotlib as plt
+from matplotlib.collections import LineCollection
 
 # Local Utilities
 from plotutil import colored_line_between_pts
@@ -110,8 +112,9 @@ def are_commutative(first, second, tolerance=1e-10):
     True | False: boolean
         Returns whether or not the matrices commute.
     """
-    if first @ second == second @ first: return True
-    else: return False
+    ab = first @ second
+    ba = second @ first
+    return np.allclose(ab, ba, atol=tolerance)
 
 
 def is_hermitian(matrix, tolerance=1e-10):
@@ -243,11 +246,11 @@ def rotate_vector(vector, axis, theta):
         return rot_mat @ vector
 
     
-    if axis == '1':
+    if axis == 1:
         return x_rot(vector, theta)
-    elif axis == '2':
+    elif axis == 2:
         return y_rot(vector, theta)
-    elif axis == '3':
+    elif axis == 3:
         return z_rot(vector, theta)
     else:
         raise ValueError('Invalid axis entered. ')
@@ -365,10 +368,9 @@ def solve_cable_tension(N, L, rho, g=EARTH_GRAVITY):
         Height positions of the N+1 segment boundaries from 0 to L.
     """
     
-    rho_0 = 0.5 * (1.0 + z / L)
     def rho(z):
+        rho_0 = 0.5 * (1.0 + z / L)
         return rho_0 * (1.0 + z / L)
-    
     
     # Determines whether the inputs have astropy units
     has_units = isinstance(L, u.Quantity) or isinstance(g, u.Quantity)
@@ -415,62 +417,51 @@ def solve_cable_tension(N, L, rho, g=EARTH_GRAVITY):
     
 
 def plot_cable_tension(z, T, L):
-    """Plot the tension along a hanging cable, colored by tension magnitude.
+    """
+    Plot the tension along a hanging cable, colored by tension magnitude.
+    
     Parameters
     ----------
-    N : int
-        Number of discrete segments along the cable.
+    z : numpy.ndarray or astropy.units.Quantity
+        Height positions of the segment boundaries (z_boundaries).
+    T : numpy.ndarray or astropy.units.Quantity
+        Tension values for each segment.
     L : float or astropy.units.Quantity
         Total length of the cable.
-    rho : callable
-        Function accepting height position `z` and returning line mass density.
-        Must accept array inputs or `astropy.units.Quantity` if `L` has units.
-    g : float or astropy.units.Quantity, optional
-        Gravitational acceleration (default is `EARTH_GRAVITY`).
-
-    Returns
-    -------
-    T : numpy.ndarray or astropy.units.Quantity
-        Array of size (N,) containing tension values for each segment from bottom to top.
-    z_boundaries : numpy.ndarray or astropy.units.Quantity
-        Array of size (N+1,) containing height positions of segment boundaries from 0 to L.
     """
-    has_units = hasattr(z_bound, "unit")
-
+    has_units = hasattr(z, "unit")
+    
     if has_units:
-        z_val = z_bound.to(u.m).value
-        T_val = T.to(u.N).value
-        L_val = L.to(u.m).value
+        z_val = z.to("m").value
+        T_val = T.to("N").value
+        L_val = L.to("m").value
     else:
-        z_val = np.asarray(z_bound)
+        z_val = np.asarray(z)
         T_val = np.asarray(T)
         L_val = L
-
+        
     N = len(T_val)
-
     fig, ax = plt.subplots(figsize=(4, 7))
-
     segments = []
+    
     for i in range(N):
         point_start = (0, z_val[i])
         point_end = (0, z_val[i + 1])
         segments.append([point_start, point_end])
-
+        
     lc = LineCollection(segments, cmap="inferno")
     lc.set_array(T_val)
     lc.set_linewidth(5)
-
     ax.add_collection(lc)
-
+    
     ax.set_xlim(-0.5, 0.5)
     ax.set_ylim(0, L_val)
     ax.set_xticks([0])
     ax.set_xticklabels(["Cable Column"])
     ax.set_ylabel("Z Position (m)")
     ax.set_title(f"Cable Tension Profile (N = {N} segments)")
-
+    
     cbar = fig.colorbar(lc, ax=ax)
     cbar.set_label("Tension (N)")
-
-    return fig, ax
     
+    return fig, ax
