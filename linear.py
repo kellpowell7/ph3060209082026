@@ -12,6 +12,8 @@ from numpy.typing import NDArray
 import numpy as np
 from astropy import units as u
 import math
+import matplotlib as plt
+from matplotlib.collections import LineCollection
 
 # Local Utilities
 from plotutil import colored_line_between_pts
