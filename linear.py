@@ -14,7 +14,7 @@ from astropy import units as u
 import math
 
 # Local Utilities
-from plotutil import colored_line_between_pts
+#from plotutil import colored_line_between_pts
 
 
 # Type Hints
@@ -64,11 +64,13 @@ def are_perpendicular(first, second, tolerance=1e-10):
         If the vectors are not perpendicular, returns False.
     """
     perp = np.dot(first, second)
-    
+
     if first.shape != second.shape: raise ValueError('Vectors not compatible. ')
-    
-    if np.abs(perp) <= tolerance: return True
-    else: return False
+
+    if np.abs(perp) <= tolerance:
+        return True
+    else:
+        return False
 
 
 def are_parallel(first, second, tolerance=1e-10):
@@ -130,7 +132,7 @@ def is_hermitian(matrix, tolerance=1e-10):
         True if the matrix is Hermitian within the given tolerance, False otherwise.
     """
     conj_tr = np.conjugate(matrix.T)
-    
+
     return np.allclose(matrix, conj_tr, atol=tolerance, rtol=0)
 
 
@@ -142,7 +144,7 @@ def is_unitary(matrix, tolerance=1e-10):
     matrix : np.array
         A valid square numpy matrix.
     tolerance : float
-        The tolerance allownace for determination of unitary-ness.
+        The tolerance allowance for determination of unitary-ness.
     
     Returns
     -------
@@ -152,7 +154,7 @@ def is_unitary(matrix, tolerance=1e-10):
 
     conj_tr = np.conjugate(matrix.T)
     inverse = np.linalg.inv(matrix)
-    
+
     return np.allclose(conj_tr, inverse, atol=tolerance, rtol=0)
 
 
@@ -171,12 +173,15 @@ def is_linear_operator(matrix, tolerance=1e-10):
     bool
         True if the matrix is a linear operator, False otherwise.
     """
-    
+
     if matrix.ndim == 2:
         rows, cols = matrix.shape
-        if rows == cols: return True
-        else: return False
-    else:raise ValueError('Matrix is the incorrect size. ')
+        if rows == cols:
+            return True
+        else:
+            return False
+    else:
+        raise ValueError('Matrix is the incorrect size. ')
 
 
 def projection(vector_a, vector_b):
@@ -201,8 +206,9 @@ def projection(vector_a, vector_b):
         dot_prod = np.dot(vector_a, vector_b)
         mag = np.linalg.norm(vector_b)
         proj = dot_prod / mag**2 * vector_b
-        
+
     return proj
+
 
 def rotate_vector(vector, axis, theta):
     """Rotate a vector through angle theta about an axis in $\\mathbb{R}^3$.
@@ -221,20 +227,18 @@ def rotate_vector(vector, axis, theta):
     np.array
         The new vector pushed through the decided transformation.
     """
-    
+
     def x_rot(vector, theta):
         rot_mat = np.array([[1, 0, 0],
                             [0, np.cos(theta), -np.sin(theta)], 
                             [0, np.sin(theta), np.cos(theta)]])
         return rot_mat @ vector
-    
-            
+
     def y_rot(vector, theta):
         rot_mat = np.array([[np.cos(theta), 0, np.sin(theta)], 
                             [0, 1, 0], 
                             [-np.sin(theta), 0, np.cos(theta)]])
         return rot_mat @ vector
-
 
     def z_rot(vector, theta):
         rot_mat = np.array([[np.cos(theta), -np.sin(theta), 0], 
@@ -242,7 +246,6 @@ def rotate_vector(vector, axis, theta):
                             [0, 0, 1]])
         return rot_mat @ vector
 
-    
     if axis == '1':
         return x_rot(vector, theta)
     elif axis == '2':
@@ -274,16 +277,16 @@ def plane_from_points(first, second, third):
     offset : float
         The offset of the plane.
     """
-    
+
     vec1 = second - first
     vec2 = third - first
-    
+
     vec_n = np.cross(vec1, vec2)
     std_form = [vec_n[0], vec_n[1], vec_n[2]]
     offset = np.dot(vec_n, first)
-    
+
     return vec_n, std_form, offset
-    
+
 
 def distance_point_to_plane(point, normal, offset):
     """Find the minimum distance from a point to a plane.
@@ -301,13 +304,13 @@ def distance_point_to_plane(point, normal, offset):
     -------
     distance : float
         The numerical distance between the point and the plane."""
-    
+
     numerator = np.abs(np.dot(point, normal) + offset)
     denominator = np.linalg.norm(normal)
-    
+
     distance = numerator / denominator
     return distance
-    
+
 
 def distance_between_lines(first_point, first_direction, second_point, second_direction):
     """Find the minumum distance between two lines in $\\mathbb{R}^3$
@@ -328,20 +331,20 @@ def distance_between_lines(first_point, first_direction, second_point, second_di
     d : float
         The absolute value distance between the lines.
     """
-    
-    
+
+
     first_point = np.array(first_point, dtype=float)
     first_direction = np.array(first_direction, dtype=float)
     second_point = np.array(second_point, dtype=float)
     second_direction = np.array(second_direction, dtype=float)
-    
+
     vec_n = np.cross(first_direction, second_direction)
     vec_n = vec_n / np.linalg.norm(vec_n)
-        
+
     d = np.abs(np.dot(second_point - first_point, vec_n))
-    
+
     return d
-    
+
 
 def solve_cable_tension(N, L, rho, g=EARTH_GRAVITY):
     """Solves for the static tension distribution in a hanging vertical cable.
@@ -364,12 +367,12 @@ def solve_cable_tension(N, L, rho, g=EARTH_GRAVITY):
     z_boundaries : numpy.ndarray or astropy.units.Quantity
         Height positions of the N+1 segment boundaries from 0 to L.
     """
-    
+
     rho_0 = 0.5 * (1.0 + z / L)
     def rho(z):
         return rho_0 * (1.0 + z / L)
-    
-    
+
+
     # Determines whether the inputs have astropy units
     has_units = isinstance(L, u.Quantity) or isinstance(g, u.Quantity)
 
@@ -412,7 +415,7 @@ def solve_cable_tension(N, L, rho, g=EARTH_GRAVITY):
         T = T_val
 
     return T, z_bound
-    
+
 
 def plot_cable_tension(z, T, L):
     """Plot the tension along a hanging cable, colored by tension magnitude.
@@ -473,4 +476,3 @@ def plot_cable_tension(z, T, L):
     cbar.set_label("Tension (N)")
 
     return fig, ax
-    
